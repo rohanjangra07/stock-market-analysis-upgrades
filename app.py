@@ -359,7 +359,7 @@ with col_right:
             title=dict(text="Normalized Price Comparison", x=0, font=dict(size=16)),
             template=plot_template,
             margin=dict(l=0, r=0, t=40, b=0),
-            height=600,
+            height=425,
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
             hovermode="x unified",
