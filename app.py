@@ -199,7 +199,14 @@ def load_data(tickers, start, end):
 
 def lstm_predict(df, ticker, days=30):
     data = df[[ticker]].dropna()
-    
+
+    # 🔴 SAFETY CHECKS
+    if data is None or data.empty or len(data) < 100:
+        return None
+
+    if data.isnull().values.any():
+        return None
+
     scaler = MinMaxScaler()
     scaled_data = scaler.fit_transform(data)
 
@@ -212,6 +219,10 @@ def lstm_predict(df, ticker, days=30):
 
     X, y = np.array(X), np.array(y)
 
+    # 🔴 another safety check
+    if len(X) == 0:
+        return None
+
     model = Sequential([
         LSTM(50, return_sequences=True, input_shape=(X.shape[1], 1)),
         LSTM(50),
@@ -219,7 +230,7 @@ def lstm_predict(df, ticker, days=30):
     ])
 
     model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X, y, epochs=5, batch_size=16, verbose=0)
+    model.fit(X, y, epochs=3, batch_size=16, verbose=0)
 
     # Predict future
     last_window = scaled_data[-window:]
@@ -880,6 +891,10 @@ with tab7:
     lstm_stock = st.selectbox("Select Stock for LSTM", raw_df.columns, key="lstm_stock")
 
     preds = lstm_predict(raw_df, lstm_stock)
+
+    if preds is None:
+        st.error("Not enough data for LSTM prediction. Try larger date range.")
+        st.stop()
 
     future_dates = pd.date_range(
         start=raw_df.index[-1] + pd.Timedelta(days=1),
