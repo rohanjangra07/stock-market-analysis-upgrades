@@ -162,51 +162,31 @@ with st.sidebar:
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl="1h", show_spinner=False)
 def load_data(tickers, start, end):
-    if not tickers:
-        return pd.DataFrame()
     try:
-        # yfinance download
         data = yf.download(
-            tickers, 
+            tickers,
             start=start,
             end=end,
-            group_by='ticker', 
-            auto_adjust=True, 
-            threads=True,
+            auto_adjust=True,
             progress=False
         )
-        
-        # Flatten MultiIndex logic
-        df = pd.DataFrame()
-        if len(tickers) == 1:
-            t = tickers[0]
-            # Handle cases where yf returns different shapes
-            if isinstance(data.columns, pd.MultiIndex):
-                # Try to find 'Close'
-                # Check levels
-                if 'Close' in data.columns.get_level_values(1):
-                     df[t] = data.xs('Close', level=1, axis=1)[t]
-                else:
-                     # Check if it's level 0 (sometimes happens with single ticker)
-                     if 'Close' in data.columns: 
-                        df[t] = data['Close']
-                     else:
-                        # Fallback for newer yfinance structure
-                        df[t] = data.xs('Close', level=1, axis=1)[t] # risky but try
-            else:
-                 df[t] = data['Close']
+
+        if data.empty:
+            return pd.DataFrame()
+
+        # SAFE extraction
+        if isinstance(data.columns, pd.MultiIndex):
+            df = data.xs('Close', level=1, axis=1)
         else:
-            for t in tickers:
-                try:
-                    # If ticker is in top level
-                    if t in data.columns.levels[0]:
-                        df[t] = data[t]['Close']
-                except KeyError:
-                    continue
-        
-        return df.dropna()
+            df = data[['Close']]
+            df.columns = tickers
+
+        return df.dropna(how="all")
+
     except Exception as e:
-        return None
+        st.write("DEBUG ERROR:", e)
+        return pd.DataFrame()
+
 
 def lstm_predict(df, ticker, days=30):
     data = df[[ticker]].dropna()
