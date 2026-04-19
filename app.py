@@ -677,16 +677,34 @@ with tab2:
     
     def predict_stock(df, ticker):
         data = df[[ticker]].dropna()
+
+        # 🔴 safety check
+        if data is None or data.empty or len(data) < 10:
+            return None
+
+        data = data.copy()
         data['Days'] = np.arange(len(data))
+
         X = data[['Days']]
         y = data[ticker]
+
+        # 🔴 remove any remaining invalid values
+        if X.isnull().values.any() or y.isnull().values.any():
+            return None
+
         model = LinearRegression()
         model.fit(X, y)
+
         future_days = np.arange(len(data), len(data)+30).reshape(-1,1)
         predictions = model.predict(future_days)
+
         return predictions
 
     pred = predict_stock(raw_df, selected_stock)
+
+    if pred is None:
+        st.error("Not enough data for prediction. Try another stock or date range.")
+        st.stop()
     
     last_date = raw_df.index[-1]
     future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=30)
