@@ -176,15 +176,24 @@ def load_data(tickers, start, end):
 
         # SAFE extraction
         if isinstance(data.columns, pd.MultiIndex):
-            df = data.xs('Close', level=1, axis=1)
+            df = data['Close']
         else:
-            df = data[['Close']]
-            df.columns = tickers
+            # Single ticker case: rename the Close column
+            if 'Close' in data.columns:
+                df = data[['Close']].copy()
+                if len(tickers) == 1:
+                    df.columns = tickers
+                else:
+                    # Unexpected: multiple tickers requested but no MultiIndex returned
+                    st.warning("Data structure mismatch - some tickers may be missing")
+                    return pd.DataFrame()
+            else:
+                return pd.DataFrame()
 
         return df.dropna(how="all")
 
     except Exception as e:
-        st.write("DEBUG ERROR:", e)
+        # Log for debugging if needed: logging.error(f"Data load failed: {e}")
         return pd.DataFrame()
 
 
