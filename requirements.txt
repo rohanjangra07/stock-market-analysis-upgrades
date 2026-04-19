@@ -7,3 +7,4 @@ scikit-learn
 textblob
 feedparser
 tensorflow==2.15.0
+matplotlib
