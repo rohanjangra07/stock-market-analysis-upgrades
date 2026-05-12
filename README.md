@@ -1,4 +1,4 @@
-# Stock Peer Analysis Dashboard
+# Stock Peer Analysis Dashboard!
 
 A **premium‑grade** Streamlit dashboard for comparing and analysing peer stocks.
 
